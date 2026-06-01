@@ -1,0 +1,48 @@
+name: Build Map Data
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r pip-req.txt
+
+      - name: Fetch map items
+        run: python fetch_map_items.py
+
+      - name: Parse map tiles
+        run: python map_parse.py
+
+      - name: Package artifacts
+        run: |
+          zip -r orig_map.zip orig_map
+          zip -r orig.zip output/orig
+          zip -r trimmed.zip output/trimmed
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Map Data Build #${{ github.run_number }}
+          files: |
+            map_items.db
+            orig_map.zip
+            orig.zip
+            trimmed.zip
