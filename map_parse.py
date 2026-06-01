@@ -2,6 +2,7 @@
 
 import os
 import json
+import time
 import requests
 from PIL import Image
 from collections import defaultdict
@@ -65,16 +66,19 @@ def download_tile_if_not_exists(tile_id: str, base_url: str, download_dir: str) 
         return save_path
 
     url = base_url + tile_id + ".png"
-    try:
-        resp = requests.get(url, timeout=10)
-        resp.raise_for_status()
-        with open(save_path, 'wb') as f:
-            f.write(resp.content)
-        print(f"下载成功: {url} -> {save_path}")
-    except Exception as e:
-        print(f"下载失败: {url}, 错误: {e}")
-        raise
-    return save_path
+    for attempt in range(1, 4):
+        try:
+            resp = requests.get(url, timeout=10)
+            resp.raise_for_status()
+            with open(save_path, 'wb') as f:
+                f.write(resp.content)
+            print(f"下载成功: {url} -> {save_path}")
+            return save_path
+        except Exception as e:
+            print(f"下载失败 (第{attempt}次): {url}, 错误: {e}")
+            if attempt < 3:
+                time.sleep(5)
+    raise RuntimeError(f"下载失败，已重试3次: {url}")
 
 
 # ======================== 图片拼接与裁剪 ========================
