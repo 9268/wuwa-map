@@ -182,7 +182,7 @@ def compute_coord_ref(min_orig_x: int, min_adj_y: int,
 # ======================== 主流程 ========================
 
 def process_map_group(key: str, tile_ids: list, base_url: str, download_dir: str, output_dir: str):
-    """处理单个地图分组：下载瓦片 -> 拼接 -> 裁边 -> 保存坐标"""
+    """处理单个地图分组：下载瓦片 -> 拼接 -> 裁边 -> 保存坐标，返回坐标参考信息"""
     groups = defaultdict(list)
 
     for tile_id in tile_ids:
@@ -191,6 +191,7 @@ def process_map_group(key: str, tile_ids: list, base_url: str, download_dir: str
         file_path = download_tile_if_not_exists(tile_id, base_url, download_dir)
         groups[img_id].append((orig_x, adjusted_y, file_path))
 
+    coord_ref = None
     for img_id, tile_list in groups.items():
         tile_list.sort(key=lambda item: (item[0], item[1]))
         canvas, min_orig_x, min_adj_y = stitch_group(tile_list)
@@ -210,10 +211,7 @@ def process_map_group(key: str, tile_ids: list, base_url: str, download_dir: str
             min_orig_x, min_adj_y, crop_left, crop_top,
             trimmed.size[0], trimmed.size[1]
         )
-        coord_path = os.path.join(output_dir + "/trimmed", f"{key}_coords.json")
-        with open(coord_path, 'w', encoding='utf-8') as f:
-            json.dump(coord_ref, f, indent=2)
-        print(f"已保存坐标参考: {coord_path}")
+    return coord_ref
 
 
 def main():
@@ -227,10 +225,18 @@ def main():
     os.makedirs(OUTPUT_DIR + '/orig', exist_ok=True)
     os.makedirs(OUTPUT_DIR + '/trimmed', exist_ok=True)
 
+    all_map_coords = {}
     for key, tile_ids in tile_map.items():
         base_url = BASE_URL_TEMPLATE.format(resource_id=resource_id, key=key)
         print(f"\n===== 处理地图 key={key}, 瓦片数={len(tile_ids)} =====")
-        process_map_group(key, tile_ids, base_url, DOWNLOAD_DIR, OUTPUT_DIR)
+        coord_ref = process_map_group(key, tile_ids, base_url, DOWNLOAD_DIR, OUTPUT_DIR)
+        if coord_ref is not None:
+            all_map_coords[key] = coord_ref
+
+    coord_path = os.path.join(OUTPUT_DIR, "map_coords.json")
+    with open(coord_path, 'w', encoding='utf-8') as f:
+        json.dump(all_map_coords, f, indent=2)
+    print(f"\n已保存合并坐标文件: {coord_path}")
 
     print("\n所有拼接完成！")
 

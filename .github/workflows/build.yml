@@ -22,7 +22,8 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install -r pip-req.txt
+        run: |
+          pip install -r pip-req.txt
 
       - name: Fetch map items
         run: python fetch_map_items.py
@@ -30,11 +31,23 @@ jobs:
       - name: Parse map tiles
         run: python map_parse.py
 
+      - name: Extract features (SIFT)
+        run: python -m match_engine.common extract --dir output/trimmed --out output/assets --param-set siftgz_ct30_et10_ol2_s16_g150_mpc200_r75_ds1_ts7000_to512_bt5_em8_md40
+
       - name: Package artifacts
         run: |
           zip -r orig_map.zip orig_map
-          zip -r orig.zip output/orig
-          zip -r trimmed.zip output/trimmed
+          cd output
+          zip -r ../orig.zip orig
+          zip -r ../trimmed.zip trimmed
+          zip -r ../features.zip assets
+
+      - name: Package assets bundle
+        run: |
+          cp -r assets/* output/assets
+          cp map_items.db output/assets
+          cp output/map_coords.json output/assets
+          cd output && zip -r ../assets.zip assets
 
       - name: Create release
         uses: softprops/action-gh-release@v2
@@ -46,3 +59,5 @@ jobs:
             orig_map.zip
             orig.zip
             trimmed.zip
+            features.zip
+            assets.zip
