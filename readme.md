@@ -65,9 +65,3 @@ python -m src.match_engine.common match \
 - center / corners：匹配中心点和四角坐标
 - game_center：对应游戏世界坐标
 
-## ⚠️ 其他说明
-### 特征参数文件不在 Release 中提供
-由于 GitHub Actions 内存限制，无法自动运行特征提取，因此 Release 仅包含原始数据和采集点信息。请你在本地运行上述 extract 命令自行生成特征文件。
-
-### SURF 算法依赖
-使用 --algo surf 需要安装带有 xfeatures2d 扩展的 OpenCV（如 opencv-contrib-python）。若环境不支持 SURF，可使用 --algo orb 作为替代（匹配精度稍低）。
