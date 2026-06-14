@@ -49,7 +49,7 @@ jobs:
           cp -r output/assets/* stitched
           cp map_items.db stitched
           cp output/map_coords.json stitched
-          zip -r ../assets.zip stitched
+          zip -r assets.zip stitched
 
       - name: Get current date
         id: date
