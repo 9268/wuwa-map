@@ -42,18 +42,27 @@ jobs:
           zip -r ../trimmed.zip trimmed
           zip -r ../features.zip assets
 
-      - name: Package assets bundle
+      - name: Package assets bundle -> stitched
         run: |
-          cp -r assets/* output/assets
-          cp map_items.db output/assets
-          cp output/map_coords.json output/assets
-          cd output && zip -r ../assets.zip assets
+          mkdir -p stitched
+          cp -r assets/* stitched
+          cp -r output/assets/* stitched
+          cp map_items.db stitched
+          cp output/map_coords.json stitched
+          zip -r ../assets.zip stitched
+
+      - name: Get current date
+        id: date
+        run: echo "date=$(date +%Y%m%d)" >> $GITHUB_OUTPUT
 
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: build-${{ github.run_number }}
-          name: Map Data Build #${{ github.run_number }}
+          tag_name: build-${{ steps.date.outputs.date }}-${{ github.run_number }}
+          name: Map Data Build ${{ steps.date.outputs.date }} #${{ github.run_number }}
+          body: |
+            地图提取所用参数：siftgz_ct30_et10_ol2_s16_g150_mpc200_r75_ds1_ts7000_to512_bt5_em8_md40
+            请下载assets.zip，解压到 assets 目录
           files: |
             map_items.db
             orig_map.zip
